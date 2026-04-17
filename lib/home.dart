@@ -373,7 +373,7 @@ class _MainPageState extends State<MainPage> {
           children: [
             IconButton(
               onPressed: () {},
-              tooltip: 'Filter',
+              tooltip: 'Select Photos',
               icon: Icon(PhosphorIconsRegular.funnelSimple),
             ),
             IconButton(

@@ -1,6 +1,6 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/cupertino.dart' hide ShortcutRegistry;
 import 'package:flutter/services.dart';
+import 'package:jade_gallery/mixins/HasKeyboardShortcuts.dart';
 
 class Zoomable extends StatefulWidget {
   final Widget child;
@@ -26,7 +26,7 @@ class Zoomable extends StatefulWidget {
   State createState() => _Zoomable();
 }
 
-class _Zoomable extends State<Zoomable> with SingleTickerProviderStateMixin {
+class _Zoomable extends State<Zoomable> with SingleTickerProviderStateMixin, Haskeyboardshortcuts {
   late TransformationController _controller;
   late AnimationController _animationController;
   Animation<Matrix4>? _animation;
@@ -43,6 +43,43 @@ class _Zoomable extends State<Zoomable> with SingleTickerProviderStateMixin {
           _controller.value = _animation!.value;
           widget.onZoom?.call(_controller.value.getMaxScaleOnAxis());
         });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      shortcutRegistry?.register(
+        const SingleActivator(LogicalKeyboardKey.equal, control: true),
+        _zoomIn,
+      );
+
+      shortcutRegistry?.register(
+        const SingleActivator(LogicalKeyboardKey.minus, control: true),
+        _zoomOut,
+      );
+
+      shortcutRegistry?.register(
+        const SingleActivator(LogicalKeyboardKey.digit0, control: true),
+        _resetZoom,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    shortcutRegistry?.unregister(
+      const SingleActivator(LogicalKeyboardKey.equal, control: true),
+      _zoomIn,
+    );
+
+    shortcutRegistry?.unregister(
+      const SingleActivator(LogicalKeyboardKey.minus, control: true),
+      _zoomOut,
+    );
+
+    shortcutRegistry?.unregister(
+      const SingleActivator(LogicalKeyboardKey.digit0, control: true),
+      _resetZoom,
+    );
+
+    super.dispose();
   }
 
   void _zoom(double delta) {
@@ -79,37 +116,22 @@ class _Zoomable extends State<Zoomable> with SingleTickerProviderStateMixin {
     _animationController.forward(from: 0);
   }
 
+  void _zoomIn() {
+    _zoom(widget.keyZoomFactor);
+  }
+
+  void _zoomOut() {
+    _zoom(-widget.keyZoomFactor);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return CallbackShortcuts(
-      bindings: widget.keyboardZoom
-          ? {
-              const SingleActivator(
-                LogicalKeyboardKey.equal,
-                control: true,
-              ): () =>
-                  _zoom(widget.keyZoomFactor),
-              const SingleActivator(LogicalKeyboardKey.equal, meta: true): () =>
-                  _zoom(widget.keyZoomFactor),
-              const SingleActivator(
-                LogicalKeyboardKey.minus,
-                control: true,
-              ): () =>
-                  _zoom(-widget.keyZoomFactor),
-              const SingleActivator(LogicalKeyboardKey.minus, meta: true): () =>
-                  _zoom(-widget.keyZoomFactor),
-              const SingleActivator(LogicalKeyboardKey.digit0, control: true):
-                  _resetZoom,
-              const SingleActivator(LogicalKeyboardKey.digit0, meta: true):
-                  _resetZoom,
-            }
-          : {},
-      child: InteractiveViewer(
-        transformationController: _controller,
-        minScale: widget.minScale,
-        maxScale: widget.maxScale,
-        child: widget.child,
-      ),
+    return InteractiveViewer(
+      transformationController: _controller,
+      minScale: widget.minScale,
+      maxScale: widget.maxScale,
+      alignment: Alignment.center,
+      child: widget.child,
     );
   }
 }

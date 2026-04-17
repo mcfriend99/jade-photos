@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:jade_gallery/color_backup.dart';
 import 'package:jade_gallery/models/collection.dart';
 import 'package:jade_gallery/models/images.dart';
 
@@ -44,6 +45,7 @@ class _CollectionThumbnailState extends State<CollectionThumbnail> {
           margin: EdgeInsets.all(0),
           shadowColor: Colors.transparent,
           shape: const ContinuousRectangleBorder(),
+          color: regionColor,
           child: Stack(
             fit: StackFit.expand,
             children: [

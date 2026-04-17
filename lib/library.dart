@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
 import 'package:jade_gallery/constants.dart';
 import 'package:jade_gallery/models/collection.dart';
 import 'package:jade_gallery/models/images.dart';
@@ -108,6 +109,24 @@ class JadeLibrary {
             ),
           )
           .toList();
+
+      final toRemove = <String>[];
+
+      for (var image in images) {
+        try {
+          final bytes = await File(image.path).readAsBytes();
+          await decodeImageFromList(bytes);
+        } catch (e) {
+          if (kDebugMode) {
+            print('Found image to remove: ${image.path}');
+          }
+
+          toRemove.add(image.path);
+        }
+      }
+
+      // Only add valid images...
+      images.removeWhere((img) => toRemove.contains(img.path));
 
       _images.addAll(images);
 

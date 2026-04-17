@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:jade_gallery/color_backup.dart';
 import 'package:jade_gallery/constants.dart';
 import 'package:jade_gallery/widgets/access_bar.dart';
+import 'package:jade_gallery/widgets/image_thumbnail.dart';
 import 'package:jade_gallery/widgets/window_box.dart';
 import 'package:jade_gallery/widgets/zoomable.dart';
 import 'package:path/path.dart' as p;
@@ -24,8 +26,10 @@ class FullscreenViewer extends StatefulWidget {
 
 class _FullscreenViewerState extends State<FullscreenViewer> {
   late PageController _pageController;
+  late ScrollController _scrollController;
   late int _currentIndex;
   bool _showAppBar = true;
+  bool _isInitialized = false;
 
   final _zoomController = TransformationController();
   final _minScale = 0.8;
@@ -37,12 +41,33 @@ class _FullscreenViewerState extends State<FullscreenViewer> {
     super.initState();
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
+    _scrollController = ScrollController(
+      initialScrollOffset: _calculateListOffset(),
+    );
+    _isInitialized = true;
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  double _calculateListOffset() {
+    double offset = 5;
+    if (_isInitialized) {
+      offset = MediaQuery.of(context).size.width / 72 / 2;
+    }
+
+    return (_currentIndex - offset).clamp(0, double.maxFinite) * 72;
+  }
+
+  void _scrollList() {
+    _scrollController.animateTo(
+      _calculateListOffset(),
+      curve: Curves.easeInOut,
+      duration: const Duration(milliseconds: 200),
+    );
   }
 
   void _toggleAppBar() {
@@ -131,6 +156,7 @@ class _FullscreenViewerState extends State<FullscreenViewer> {
                   onPageChanged: (index) {
                     setState(() {
                       _currentIndex = index;
+                      _scrollList();
                     });
                   },
                   itemBuilder: (context, index) {
@@ -154,57 +180,43 @@ class _FullscreenViewerState extends State<FullscreenViewer> {
               ),
             ),
           ),
-        ],
-      ),
-    );
+          _showAppBar
+              ? Container(
+                  height: 80,
+                  decoration: BoxDecoration(
+                    border: BoxBorder.fromLTRB(
+                      top: const BorderSide(
+                        color: innerBorderColor,
+                        width: 0.5,
+                      ),
+                    ),
+                  ),
+                  child: ListView.separated(
+                    itemCount: widget.images.length,
+                    scrollDirection: Axis.horizontal,
+                    controller: _scrollController,
+                    hitTestBehavior: HitTestBehavior.translucent,
+                    padding: EdgeInsets.all(8),
+                    separatorBuilder: (context, index) =>
+                        const VerticalDivider(width: 12),
+                    itemBuilder: (context, index) {
+                      final image = widget.images[index];
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      extendBodyBehindAppBar: true,
-      appBar: _showAppBar
-          ? AppBar(
-              backgroundColor: Colors.black.withAlpha(40),
-              elevation: 0,
-              leading: const BackButton(color: Colors.white),
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    p.basename(widget.images.elementAt(_currentIndex).path),
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                      return SizedBox(
+                        width: 60,
+                        height: 60,
+                        child: ImageThumbnail(
+                          key: Key(image.path),
+                          image: image,
+                          isSelected: index == _currentIndex,
+                          onTap: () => _pageController.jumpToPage(index),
+                        ),
+                      );
+                    },
                   ),
-                  Text(
-                    '${_currentIndex + 1} / ${widget.images.length}',
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                ],
-              ),
-            )
-          : null,
-      body: GestureDetector(
-        onTap: _toggleAppBar,
-        child: PageView.builder(
-          controller: _pageController,
-          itemCount: widget.images.length,
-          onPageChanged: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          itemBuilder: (context, index) {
-            final image = widget.images.elementAt(index);
-            return InteractiveViewer(
-              minScale: 1.0,
-              maxScale: 4.0,
-              child: Center(
-                child: Hero(
-                  tag: image.path,
-                  child: Image.file(image.file, fit: BoxFit.contain),
-                ),
-              ),
-            );
-          },
-        ),
+                )
+              : SizedBox(),
+        ],
       ),
     );
   }

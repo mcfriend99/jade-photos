@@ -21,10 +21,12 @@ class JCache {
     // Filter out files that might have been deleted from disk since last run
 
     return JCache(
-      collections: (map['collections'] as List<Collection>)
+      collections: (map['collections'] as List<dynamic>)
+          .map((s) => Collection.fromMap(s))
           .where((s) => Directory(s.path).existsSync())
           .toList(),
-      images: (map['images'] as List<JImage>)
+      images: (map['images'] as List<dynamic>)
+          .map((s) => JImage.fromMap(s))
           .where((s) => s.file.existsSync())
           .toList(),
     );

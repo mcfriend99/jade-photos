@@ -8,7 +8,7 @@ const regionColor = Color(0xFF2D2D2D);          // Sidebar / Activity Bar Area
 const borderColor = Color(0xFF3F3F46);          // Subtle UI border
 const innerBorderColor = Color(0xFF6B7280);     // More defined inner borders
 const iconColor = Color(0xFFE5E7EB);            // Light grey icons for visibility
-const disabledIconColor = Color(0xFF9CA3AF);    // Muted grey for disabled state
+const disabledIconColor = Color(0xFF5D6675);    // Muted grey for disabled state
 
 // Accent for highlights (verses, selected items)
 const accentBlue = Color(0xFF0073FF);           // Apple-style Blue retained

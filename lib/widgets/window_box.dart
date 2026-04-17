@@ -1,6 +1,7 @@
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
 import 'package:jade_gallery/color.dart';
+import 'package:jade_gallery/shortcuts.dart';
 import 'package:jade_gallery/widgets/window_buttons.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
@@ -69,98 +70,103 @@ class WindowBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor ?? backgroundStartColor,
-      body: WindowBorder(
-        color: borderColor,
-        width: 1,
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [backgroundStartColor, backgroundEndColor],
-              stops: [0.0, 1.0],
+      body: GlobalShortcuts(
+        child: WindowBorder(
+          color: borderColor,
+          width: 1,
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [backgroundStartColor, backgroundEndColor],
+                stops: [0.0, 1.0],
+              ),
             ),
-          ),
-          child: Column(
-            children: [
-              // Title bar
-              WindowTitleBarBox(
-                child: Container(
-                  color: regionColor,
-                  child: Row(
-                    children: [
-                      if (logo != null)
-                        Padding(
-                          padding: title == null
-                              ? EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 4,
-                                )
-                              : EdgeInsets.only(left: 16, top: 4, bottom: 4),
-                          child: Image.asset(
-                            logo!,
-                            width: 20,
-                            height: 20,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      if (title != null)
-                        Padding(
-                          padding: logo == null
-                              ? EdgeInsets.symmetric(
-                                  vertical: 4,
-                                  horizontal: 16,
-                                )
-                              : EdgeInsets.only(
-                                  left: 8,
-                                  right: 16,
-                                  top: 4,
-                                  bottom: 4,
-                                ),
-                          child: Text(
-                            title!,
-                            style: TextStyle(
-                              color: normalColor,
-                              fontWeight: FontWeight.bold,
+            child: Column(
+              children: [
+                // Title bar
+                WindowTitleBarBox(
+                  child: Container(
+                    color: regionColor,
+                    child: Row(
+                      children: [
+                        if (logo != null)
+                          Padding(
+                            padding: title == null
+                                ? EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 4,
+                                  )
+                                : EdgeInsets.only(left: 16, top: 4, bottom: 4),
+                            child: Image.asset(
+                              logo!,
+                              width: 20,
+                              height: 20,
+                              fit: BoxFit.contain,
                             ),
                           ),
-                        ),
-                      Expanded(child: MoveWindow()),
-                      const WindowButtons(),
-                    ],
+                        if (title != null)
+                          Padding(
+                            padding: logo == null
+                                ? EdgeInsets.symmetric(
+                                    vertical: 4,
+                                    horizontal: 16,
+                                  )
+                                : EdgeInsets.only(
+                                    left: 8,
+                                    right: 16,
+                                    top: 4,
+                                    bottom: 4,
+                                  ),
+                            child: Text(
+                              title!,
+                              style: TextStyle(
+                                color: normalColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        Expanded(child: MoveWindow()),
+                        const WindowButtons(),
+                      ],
+                    ),
                   ),
                 ),
-              ),
 
-              // Toolbar
-              if (actions != null && actions!.isNotEmpty)
-                IntrinsicHeight(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: toolbarColor ?? regionColor,
-                      border: BoxBorder.fromLTRB(
-                        bottom: BorderSide(color: borderColor),
+                // Toolbar
+                if (actions != null && actions!.isNotEmpty)
+                  IntrinsicHeight(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: toolbarColor ?? regionColor,
+                        border: BoxBorder.fromLTRB(
+                          bottom: BorderSide(color: borderColor),
+                        ),
+                      ),
+                      child: Theme(
+                        data: _themeOverrideData(context),
+                        child: Row(spacing: 4, children: actions!),
                       ),
                     ),
+                  ),
+
+                // Main Content
+                DefaultTextStyle(
+                  style: TextStyle(color: normalColor, fontSize: 13),
+                  child: Expanded(
                     child: Theme(
                       data: _themeOverrideData(context),
-                      child: Row(spacing: 4, children: actions!),
+                      child: child ?? Center(),
                     ),
                   ),
                 ),
-
-              // Main Content
-              DefaultTextStyle(
-                style: TextStyle(color: normalColor, fontSize: 13),
-                child: Expanded(
-                  child: Theme(
-                    data: _themeOverrideData(context),
-                    child: child ?? Center(),
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

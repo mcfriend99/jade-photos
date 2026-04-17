@@ -7,8 +7,16 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 class ImageThumbnail extends StatefulWidget {
   final JImage image;
   final VoidCallback onTap;
+  final bool showName;
+  final bool isSelected;
 
-  const ImageThumbnail({super.key, required this.image, required this.onTap});
+  const ImageThumbnail({
+    super.key,
+    required this.image,
+    required this.onTap,
+    this.showName = false,
+    this.isSelected = false,
+  });
 
   @override
   State<ImageThumbnail> createState() => _ImageThumbnailState();
@@ -21,8 +29,12 @@ class _ImageThumbnailState extends State<ImageThumbnail> {
   Widget build(BuildContext context) {
     return MouseRegion(
       key: Key(widget.image.path),
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
+      onEnter: widget.showName
+          ? (_) => setState(() => _isHovered = true)
+          : null,
+      onExit: widget.showName
+          ? (_) => setState(() => _isHovered = false)
+          : null,
       child: AnimatedScale(
         scale: _isHovered ? 0.98 : 1.0,
         duration: const Duration(milliseconds: 200),
@@ -31,13 +43,17 @@ class _ImageThumbnailState extends State<ImageThumbnail> {
           elevation: _isHovered ? 8 : 1,
           margin: EdgeInsets.all(0),
           shadowColor: Colors.transparent,
-          shape: const ContinuousRectangleBorder(),
+          shape: ContinuousRectangleBorder(
+            side: widget.isSelected
+                ? BorderSide(color: accentBlue, width: 4)
+                : BorderSide(color: Colors.transparent, width: 0.5),
+          ),
+          color: regionColor,
           child: Stack(
             fit: StackFit.expand,
             children: [
               Hero(
                 tag: widget.image,
-                // placeholderBuilder: (context, size, _) => Container(width: size.width, height: size.height, color: regionColor,),
                 child: Image.file(
                   widget.image.file,
                   fit: BoxFit.cover,
@@ -48,7 +64,7 @@ class _ImageThumbnailState extends State<ImageThumbnail> {
                   ),
                 ),
               ),
-              if (_isHovered)
+              if (_isHovered && widget.showName)
                 Positioned(
                   bottom: 0,
                   left: 0,
