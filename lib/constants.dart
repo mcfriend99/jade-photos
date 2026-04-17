@@ -1,4 +1,4 @@
-const appName = 'Jade Gallery';
+const appName = 'Jade Photos';
 
 const supportedFileExtensions = [
   '.jpg',

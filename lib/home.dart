@@ -38,6 +38,7 @@ class _MainPageState extends State<MainPage> {
   String _accessBarTitle = 'Library';
   double _gridMaxExtent = 220;
   AppPage _currentPage = AppPage.library;
+  Collection? _activeCollection;
 
   @override
   void initState() {
@@ -159,7 +160,9 @@ class _MainPageState extends State<MainPage> {
           const SizedBox(height: 24),
           Text(
             'Your gallery is empty',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: normalColor),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(color: normalColor),
           ),
           const SizedBox(height: 16),
           Row(
@@ -183,7 +186,7 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  Widget _buildGrid(BuildContext context) {
+  Widget _buildGrid(BuildContext context, List<JImage> images) {
     final gridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
       maxCrossAxisExtent: _gridMaxExtent,
       childAspectRatio: 1,
@@ -205,9 +208,10 @@ class _MainPageState extends State<MainPage> {
             key: Key(collection.path),
             collection: collection,
             images: _images,
-            onTap: () {
-              // TODO: Filter the images to only show those in the collection...
-            },
+            onTap: () => setState(() {
+              _activeCollection = collection;
+              _currentPage = AppPage.library;
+            }),
           );
         },
       );
@@ -216,9 +220,9 @@ class _MainPageState extends State<MainPage> {
     return GridView.builder(
       gridDelegate: gridDelegate,
       physics: gridPhysics,
-      itemCount: _images.length,
+      itemCount: images.length,
       itemBuilder: (context, index) {
-        final image = _images[index];
+        final image = images[index];
 
         return ImageThumbnail(
           key: Key(image.path),
@@ -227,7 +231,7 @@ class _MainPageState extends State<MainPage> {
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) =>
-                    FullscreenViewer(images: _images, initialIndex: index),
+                    FullscreenViewer(images: images, initialIndex: index),
               ),
             );
           },
@@ -242,6 +246,10 @@ class _MainPageState extends State<MainPage> {
       selectedId: _currentPage.index,
       onChange: (id, label) {
         setState(() {
+          if(id == AppPage.library.index) {
+            _activeCollection = null;
+          }
+
           _currentPage = AppPage.values[id];
           _accessBarTitle = label;
         });
@@ -291,7 +299,19 @@ class _MainPageState extends State<MainPage> {
 
   Widget _titleBar() {
     return AccessBar(
-      title: _accessBarTitle,
+      title: _activeCollection != null
+          ? '$_accessBarTitle: ${_activeCollection!.name}'
+          : _accessBarTitle,
+      leading: _activeCollection != null
+          ? IconButton(
+              onPressed: () => setState(() {
+                _currentPage = AppPage.collections;
+                _activeCollection = null;
+              }),
+              tooltip: 'Back to Collections',
+              icon: Icon(PhosphorIconsRegular.arrowLeft),
+            )
+          : null,
       actions: [
         Row(
           spacing: 4,
@@ -369,12 +389,16 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    final images = _activeCollection != null
+        ? _images.where((i) => i.collection == _activeCollection!.id).toList()
+        : _images;
+
     return WindowBox(
       title: widget.title,
       actions: [
         IconButton(
           icon: const Icon(PhosphorIconsRegular.trashSimple),
-          onPressed: _images.isNotEmpty ? _clearGallery : null,
+          onPressed: images.isNotEmpty ? _clearGallery : null,
           tooltip: 'Clear Gallery',
         ),
         const VerticalDivider(width: 20),
@@ -402,9 +426,9 @@ class _MainPageState extends State<MainPage> {
                   Expanded(
                     child: Stack(
                       children: [
-                        _images.isEmpty && !_isLoading
+                        images.isEmpty && !_isLoading
                             ? _buildEmptyState(context)
-                            : _buildGrid(context),
+                            : _buildGrid(context, images),
                         if (_isLoading)
                           const Center(
                             child: CircularProgressIndicator(
