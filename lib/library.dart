@@ -1,10 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:jade_gallery/constants.dart';
 import 'package:jade_gallery/models/collection.dart';
-import 'package:jade_gallery/models/images.dart';
+import 'package:jade_gallery/models/j_cache.dart';
+import 'package:jade_gallery/models/j_image.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -16,6 +18,7 @@ class JadeLibrary {
   JadeLibrary._internal();
 
   static Directory? _root;
+  static File? _localFile;
 
   static final List<Collection> _collections = [];
   static final List<JImage> _images = [];
@@ -67,6 +70,53 @@ class JadeLibrary {
     }
   }
 
+  static File get _cache {
+    if (_root == null) {
+      throw Exception('Cannot access cache before calling init().');
+    }
+
+    _localFile ??= File('${_root!.path}/gallery_cache.json');
+    return _localFile!;
+  }
+
+  static Future<JCache> loadCache() async {
+    if (await _cache.exists()) {
+      final content = await _cache.readAsString();
+      final dynamic json = jsonDecode(content);
+      return JCache.fromMap(json);
+    } else {
+      await _cache.create(recursive: true);
+    }
+
+    return JCache.fromMap({});
+  }
+
+  static Future<void> saveCacheFromData({
+    List<Collection>? collections,
+    List<JImage>? images,
+  }) async {
+    try {
+      await _cache.writeAsString(
+        jsonEncode(
+          JCache(
+            collections: collections ?? _collections,
+            images: images ?? _images,
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error saving cache: $e');
+    }
+  }
+
+  static Future<void> saveCache(JCache cache) async {
+    try {
+      await _cache.writeAsString(jsonEncode(cache));
+    } catch (e) {
+      debugPrint('Error saving cache: $e');
+    }
+  }
+
   static Future<void> scan() async {
     _collections.clear();
     _images.clear();
@@ -81,6 +131,8 @@ class JadeLibrary {
         await addCollection(path.absolute.path);
       }
     }
+
+    await saveCacheFromData();
   }
 
   static Future<void> addCollection(String path) async {

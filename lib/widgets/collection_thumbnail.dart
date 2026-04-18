@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:jade_gallery/color_backup.dart';
 import 'package:jade_gallery/models/collection.dart';
-import 'package:jade_gallery/models/images.dart';
+import 'package:jade_gallery/models/j_image.dart';
 
 class CollectionThumbnail extends StatefulWidget {
   final Collection collection;

@@ -4,11 +4,13 @@ class JImage {
   final String collection;
   final String path;
   final File file;
+  bool favorite;
 
-  const JImage({
+  JImage({
     required this.collection,
     required this.path,
     required this.file,
+    this.favorite = false,
   });
 
   Map<String, Object?> toJson() => {

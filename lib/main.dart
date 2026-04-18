@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:jade_gallery/color.dart';
 import 'package:jade_gallery/constants.dart';
 import 'package:jade_gallery/home.dart';
-import 'package:jade_gallery/library.dart';
+import 'package:jade_gallery/shortcuts.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,18 +30,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: appName,
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: accentBlue,
+    return GlobalShortcuts(
+      child: MaterialApp(
+        title: appName,
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: accentBlue,
+            // brightness: Brightness.dark,
+          ),
           // brightness: Brightness.dark,
+          // textTheme: GoogleFonts.gothicA1TextTheme(),
         ),
-        // brightness: Brightness.dark,
-        // textTheme: GoogleFonts.gothicA1TextTheme(),
+        home: const MainPage(title: appName),
       ),
-      home: const MainPage(title: appName),
     );
   }
 }

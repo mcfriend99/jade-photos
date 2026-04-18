@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:jade_gallery/color_backup.dart';
 import 'package:jade_gallery/constants.dart';
+import 'package:jade_gallery/library.dart';
+import 'package:jade_gallery/mixins/HasKeyboardShortcuts.dart';
 import 'package:jade_gallery/widgets/access_bar.dart';
 import 'package:jade_gallery/widgets/image_thumbnail.dart';
 import 'package:jade_gallery/widgets/window_box.dart';
@@ -8,23 +11,26 @@ import 'package:jade_gallery/widgets/zoomable.dart';
 import 'package:path/path.dart' as p;
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
-import 'models/images.dart';
+import 'models/j_image.dart';
 
 class FullscreenViewer extends StatefulWidget {
   final List<JImage> images;
   final int initialIndex;
+  final Function(int, JImage)? onChange;
 
   const FullscreenViewer({
     super.key,
     required this.images,
     required this.initialIndex,
+    this.onChange,
   });
 
   @override
   State<FullscreenViewer> createState() => _FullscreenViewerState();
 }
 
-class _FullscreenViewerState extends State<FullscreenViewer> {
+class _FullscreenViewerState extends State<FullscreenViewer>
+    with Haskeyboardshortcuts {
   late PageController _pageController;
   late ScrollController _scrollController;
   late int _currentIndex;
@@ -45,11 +51,24 @@ class _FullscreenViewerState extends State<FullscreenViewer> {
       initialScrollOffset: _calculateListOffset(),
     );
     _isInitialized = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      shortcutRegistry?.register(
+        const SingleActivator(LogicalKeyboardKey.period, control: true),
+        _toggleFavorite,
+      );
+    });
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+
+    shortcutRegistry?.unregister(
+      const SingleActivator(LogicalKeyboardKey.period, control: true),
+      _toggleFavorite,
+    );
+
     super.dispose();
   }
 
@@ -74,6 +93,19 @@ class _FullscreenViewerState extends State<FullscreenViewer> {
     setState(() {
       _showAppBar = !_showAppBar;
     });
+  }
+
+  void _toggleFavorite() {
+    setState(() {
+      widget.images[_currentIndex].favorite =
+          !widget.images[_currentIndex].favorite;
+    });
+
+    // notify the parent
+    widget.onChange?.call(_currentIndex, widget.images[_currentIndex]);
+
+    // update the cache
+    JadeLibrary.saveCacheFromData(images: widget.images);
   }
 
   @override
@@ -126,6 +158,13 @@ class _FullscreenViewerState extends State<FullscreenViewer> {
                     icon: Icon(PhosphorIconsRegular.plus),
                   ),
                   const VerticalDivider(),
+                  IconButton(
+                    onPressed: _toggleFavorite,
+                    tooltip: 'Favorite (⌘.)',
+                    icon: widget.images[_currentIndex].favorite
+                        ? Icon(PhosphorIconsFill.heart, color: accentBlue)
+                        : Icon(PhosphorIconsRegular.heart),
+                  ),
                   IconButton(
                     onPressed: null,
                     tooltip: 'Properties (⌘I)',

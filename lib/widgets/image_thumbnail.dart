@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jade_gallery/color.dart';
-import 'package:jade_gallery/models/images.dart';
+import 'package:jade_gallery/models/j_image.dart';
 import 'package:path/path.dart' as p;
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 

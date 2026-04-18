@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
@@ -6,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:jade_gallery/constants.dart';
 import 'package:jade_gallery/enums.dart';
 import 'package:jade_gallery/library.dart';
-import 'package:jade_gallery/models/images.dart';
 import 'package:jade_gallery/models/j_cache.dart';
+import 'package:jade_gallery/models/j_image.dart';
 import 'package:jade_gallery/viewer.dart';
 import 'package:jade_gallery/widgets/access_bar.dart';
 import 'package:jade_gallery/widgets/collection_thumbnail.dart';
@@ -31,6 +30,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  late JCache _jCache;
   List<Collection> _collections = [];
   List<JImage> _images = [];
 
@@ -52,37 +52,17 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> _loadPersistedCollections() async {
-    try {
-      final file = await _localFile;
-      if (await file.exists()) {
-        final content = await file.readAsString();
-        final dynamic json = jsonDecode(content);
-        final JCache cache = JCache.fromMap(json);
-
-        setState(() {
-          _collections = cache.collections;
-          _images = cache.images;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading cache: $e');
-    }
-
     JadeLibrary.init().then((_) async {
+      final cache = await JadeLibrary.loadCache();
+
+      setState(() {
+        _collections = cache.collections;
+        _images = cache.images;
+      });
+
       // Trigger the initial reload of images to update library.
       _reloadImages();
     });
-  }
-
-  Future<void> _saveCache() async {
-    try {
-      final file = await _localFile;
-      await file.writeAsString(
-        jsonEncode(JCache(collections: _collections, images: _images)),
-      );
-    } catch (e) {
-      debugPrint('Error saving cache: $e');
-    }
   }
 
   Future<void> _reloadImages() async {
@@ -92,8 +72,6 @@ class _MainPageState extends State<MainPage> {
       _collections = JadeLibrary.getCollections();
       _images = JadeLibrary.getImages();
     });
-
-    _saveCache();
   }
 
   Future<void> _pickImage() async {
@@ -107,8 +85,6 @@ class _MainPageState extends State<MainPage> {
     if (file != null) {
       await JadeLibrary.addImageToDefaultCollection(file.path);
       await _reloadImages();
-
-      _saveCache();
     }
   }
 
@@ -120,8 +96,6 @@ class _MainPageState extends State<MainPage> {
       try {
         await JadeLibrary.importCollection(directoryPath);
         await _reloadImages();
-
-        _saveCache();
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -143,7 +117,7 @@ class _MainPageState extends State<MainPage> {
       _collections = [];
     });
 
-    _saveCache();
+    JadeLibrary.saveCache(JCache());
   }
 
   Widget _buildEmptyState(BuildContext context) {
@@ -230,8 +204,15 @@ class _MainPageState extends State<MainPage> {
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) =>
-                    FullscreenViewer(images: images, initialIndex: index),
+                builder: (context) => FullscreenViewer(
+                  images: images,
+                  initialIndex: index,
+                  onChange: (index, image) {
+                    setState(() {
+                      _images[index] = image;
+                    });
+                  },
+                ),
               ),
             );
           },
@@ -246,7 +227,7 @@ class _MainPageState extends State<MainPage> {
       selectedId: _currentPage.index,
       onChange: (id, label) {
         setState(() {
-          if(id == AppPage.library.index) {
+          if (id == AppPage.library.index) {
             _activeCollection = null;
           }
 

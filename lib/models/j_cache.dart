@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:jade_gallery/models/collection.dart';
-import 'package:jade_gallery/models/images.dart';
+import 'package:jade_gallery/models/j_image.dart';
 
 class JCache {
   final List<Collection> collections;
